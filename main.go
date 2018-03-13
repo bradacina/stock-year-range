@@ -8,7 +8,7 @@ import (
 
 type settings struct {
 	OutputFolder string
-	OutputIndex string
+	OutputIndex  string
 }
 
 var runtimeSettings settings
@@ -26,7 +26,7 @@ func main() {
 
 	tickChan := time.Tick(time.Second)
 
-	feederChan := feeder([]string{"NUH.AX"})
+	feederChan := feeder([]string{"NUH.AX", "Z1P"})
 
 	sinkChan := make(chan stats, 10)
 

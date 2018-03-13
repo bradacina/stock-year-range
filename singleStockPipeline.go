@@ -3,30 +3,32 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
-	"sync"
 	"regexp"
+	"strconv"
 	"strings"
+	"sync"
 )
 
 type stats struct {
-	symbol string
-	price float32
-	min float32
-	max float32
-	percentage float32
+	symbol     string
+	price      float64
+	min        float64
+	max        float64
+	percentage float64
 }
 
 func singleStockPipeline(
-	symbol string, 
+	symbol string,
 	wg *sync.WaitGroup,
 	sinkChan chan<- stats) {
 	debug("Downloading data for", symbol)
 	defer wg.Done()
 
 	content, err := downloadData(symbol)
-	if err != nil || content == ""{
+	if err != nil || content == "" {
 		// skip the rest of the pipeline
 		return
 	}
@@ -39,31 +41,60 @@ func singleStockPipeline(
 		return
 	}
 
+	stats.symbol = symbol
+
 	sinkChan <- stats
 }
 
 var regex = regexp.MustCompile("^[a0-9]+,([\\dd.]+),([\\dd.]+)$")
+
 func parseContent(content string) (stats, error) {
-	
+
 	lines := strings.Split(content, "\n")
-	//list := make([]stats, len(lines))
+	min := math.MaxFloat64
+	max := float64(0.0)
+	price := float64(0.0)
 
 	for _, line := range lines {
 		debug("parsing line", line)
 		match := regex.FindAllStringSubmatch(line, -1)
-		if match == nil {
+		if match == nil || len(match[0]) != 3 {
 			continue
 		}
 
 		debug("parsed line", match)
+
+		daymin, err := strconv.ParseFloat(match[0][2], 64)
+		if err != nil {
+			warning(err, "Error when parsing float", match[0])
+		} else {
+			if daymin < 0.001 {
+				warning("encountered an abnormal daily min value", daymin)
+			} else {
+				min = math.Min(min, daymin)
+			}
+		}
+
+		daymax, err := strconv.ParseFloat(match[0][1], 64)
+		if err != nil {
+			warning(err, "Error when parsing float", match[1])
+		} else {
+			max = math.Max(max, daymax)
+
+			// treat the day's max price as the current price
+			price = daymax
+		}
+
+		debug("parsed min:", daymin, "max:", daymax)
 	}
-	
+
+	percentage := (price - min) / (max - min)
+
 	return stats{
-		symbol:"haha",
-		price:123,
-		min:100,
-		max:200,
-		percentage : .2}, nil
+		price:      price,
+		min:        min,
+		max:        max,
+		percentage: percentage}, nil
 }
 
 func downloadData(symbol string) (string, error) {
