@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"regexp"
+	"strings"
 )
 
 type stats struct {
@@ -40,7 +42,22 @@ func singleStockPipeline(
 	sinkChan <- stats
 }
 
+var regex = regexp.MustCompile("^[a0-9]+,([\\dd.]+),([\\dd.]+)$")
 func parseContent(content string) (stats, error) {
+	
+	lines := strings.Split(content, "\n")
+	//list := make([]stats, len(lines))
+
+	for _, line := range lines {
+		debug("parsing line", line)
+		match := regex.FindAllStringSubmatch(line, -1)
+		if match == nil {
+			continue
+		}
+
+		debug("parsed line", match)
+	}
+	
 	return stats{
 		symbol:"haha",
 		price:123,

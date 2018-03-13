@@ -33,7 +33,7 @@ func main() {
 	doneChan := make(chan struct{})
 
 	outputIndexFile := runtimeSettings.OutputFolder + "/" + runtimeSettings.OutputIndex
-	go sink(sinkChan, newFileSink(outputIndexFile), doneChan)
+	go sink(sinkChan, outputIndexFile, fileSinkDelegate, doneChan)
 
 	wg := sync.WaitGroup{}
 

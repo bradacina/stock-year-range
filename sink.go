@@ -2,34 +2,41 @@ package main
 
 import (
 	"os"
-	"bufio"
 	"fmt"
 )
 
-type sinkDelegate (func(stats))
+type sinkDelegate (func(*os.File, stats))
 
-func newFileSink(outputFile string) sinkDelegate {
-	f, err := os.Create(outputFile)
-	if err != nil {
-		fatal(err, "Cannot create output file", outputFile)
-	}
-
-	bufWriter := bufio.NewWriter(f)
-
-	return func(thestats stats) {
-		debug("going to write to file %v", thestats)
-		_, err := bufWriter.WriteString(fmt.Sprintf("%v", thestats))
+func fileSinkDelegate(file *os.File, thestats stats) {
+		debug("going to write to file", fmt.Sprintf("%v", thestats))
+		_, err := file.WriteString(
+			fmt.Sprintf("%v,%v,%v,%v,%v\n", 
+			thestats.symbol,
+			thestats.price,
+			thestats.min,
+			thestats.max,
+			thestats.percentage))
 		if err != nil {
 			fatal(err, "Cannot write to output index file")
 		}
 	}
-}
 
-func sink(sinkChan <-chan stats, f sinkDelegate, done <-chan struct{}) {
+func sink(
+	sinkChan <-chan stats,
+	outputFile string, 
+	f sinkDelegate, 
+	done <-chan struct{}) {
+		
+		file, err := os.Create(outputFile)
+		if err != nil {
+			fatal(err, "Cannot create output file", outputFile)
+		}
+		defer file.Close()
+
 	for {
 		select{
 		case stats := <- sinkChan:
-			f(stats)
+			f(file,stats)
 			break
 		case <- done:
 			return
