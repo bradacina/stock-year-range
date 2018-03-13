@@ -9,15 +9,17 @@ import (
 type settings struct {
 	OutputFolder string
 	OutputIndex  string
+	MessageLevel int
 }
 
 var runtimeSettings settings
 
 func main() {
-	setLevel(Debug)
-
+	runtimeSettings.MessageLevel = Warning
 	runtimeSettings.OutputFolder = "output"
 	runtimeSettings.OutputIndex = "index.idx"
+
+	setLevel(runtimeSettings.MessageLevel)
 
 	err := os.MkdirAll(runtimeSettings.OutputFolder, os.ModeDir)
 	if err != nil {

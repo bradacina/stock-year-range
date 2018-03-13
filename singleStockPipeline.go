@@ -79,10 +79,14 @@ func parseContent(symbol, content string) (stats, error) {
 		if err != nil {
 			warning(err, symbol, ":Error when parsing float", match[1])
 		} else {
-			max = math.Max(max, daymax)
+			if daymax < 0.001 {
+				warning(symbol, ":encountered an abnormal daily max value", daymax)
+			} else {
+				max = math.Max(max, daymax)
 
-			// treat the day's max price as the current price
-			price = daymax
+				// treat the day's max price as the current price
+				price = daymax
+			}
 		}
 
 		debug(symbol, ":parsed min:", daymin, "max:", daymax)
