@@ -8,17 +8,45 @@ import (
 	"sync"
 )
 
-func singleStockPipeline(symbol string, wg *sync.WaitGroup) {
+type stats struct {
+	symbol string
+	price float32
+	min float32
+	max float32
+	percentage float32
+}
+
+func singleStockPipeline(
+	symbol string, 
+	wg *sync.WaitGroup,
+	sinkChan chan<- stats) {
 	debug("Downloading data for", symbol)
 	defer wg.Done()
 
 	content, err := downloadData(symbol)
-	if err != nil {
+	if err != nil || content == ""{
 		// skip the rest of the pipeline
 		return
 	}
 
 	debug("Successfully got data for", symbol, ":", content)
+
+	stats, err := parseContent(content)
+	if err != nil {
+		// skip the rest of pipeline
+		return
+	}
+
+	sinkChan <- stats
+}
+
+func parseContent(content string) (stats, error) {
+	return stats{
+		symbol:"haha",
+		price:123,
+		min:100,
+		max:200,
+		percentage : .2}, nil
 }
 
 func downloadData(symbol string) (string, error) {

@@ -8,6 +8,7 @@ import (
 
 type settings struct {
 	OutputFolder string
+	OutputIndex string
 }
 
 var runtimeSettings settings
@@ -16,6 +17,7 @@ func main() {
 	setLevel(Debug)
 
 	runtimeSettings.OutputFolder = "output"
+	runtimeSettings.OutputIndex = "index.idx"
 
 	err := os.MkdirAll(runtimeSettings.OutputFolder, os.ModeDir)
 	if err != nil {
@@ -25,6 +27,13 @@ func main() {
 	tickChan := time.Tick(time.Second)
 
 	feederChan := feeder([]string{"NUH.AX"})
+
+	sinkChan := make(chan stats, 10)
+
+	doneChan := make(chan struct{})
+
+	outputIndexFile := runtimeSettings.OutputFolder + "/" + runtimeSettings.OutputIndex
+	go sink(sinkChan, newFileSink(outputIndexFile), doneChan)
 
 	wg := sync.WaitGroup{}
 
@@ -39,7 +48,7 @@ tickerLoop:
 			}
 
 			wg.Add(1)
-			go singleStockPipeline(symbol, &wg)
+			go singleStockPipeline(symbol, &wg, sinkChan)
 			break
 		}
 	}
