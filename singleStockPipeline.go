@@ -12,7 +12,7 @@ func singleStockPipeline(symbol string, wg *sync.WaitGroup) {
 	debug("Downloading data for", symbol)
 	defer wg.Done()
 
-	content, err := xxx(symbol)
+	content, err := downloadData(symbol)
 	if err != nil {
 		// skip the rest of the pipeline
 		return
@@ -21,7 +21,7 @@ func singleStockPipeline(symbol string, wg *sync.WaitGroup) {
 	debug("Successfully got data for", symbol, ":", content)
 }
 
-func xxx(symbol string) (string, error) {
+func downloadData(symbol string) (string, error) {
 
 	outputFile := runtimeSettings.OutputFolder + "/" + symbol + ".txt"
 	stat, _ := os.Stat(outputFile)

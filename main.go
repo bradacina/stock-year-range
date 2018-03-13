@@ -17,11 +17,14 @@ func main() {
 
 	runtimeSettings.OutputFolder = "output"
 
-	os.MkdirAll(runtimeSettings.OutputFolder, os.ModeDir)
+	err := os.MkdirAll(runtimeSettings.OutputFolder, os.ModeDir)
+	if err != nil {
+		fatal(err, "Could not create output folder", runtimeSettings.OutputFolder)
+	}
 
 	tickChan := time.Tick(time.Second)
 
-	feederChan := feeder([]string{"AAPL", "vvv", "ccc"})
+	feederChan := feeder([]string{"NUH.AX"})
 
 	wg := sync.WaitGroup{}
 
