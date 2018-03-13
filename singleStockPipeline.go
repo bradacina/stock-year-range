@@ -24,7 +24,7 @@ func singleStockPipeline(
 	symbol string,
 	wg *sync.WaitGroup,
 	sinkChan chan<- stats) {
-	debug("Downloading data for", symbol)
+	debug(symbol, ":Downloading data")
 	defer wg.Done()
 
 	content, err := downloadData(symbol)
@@ -33,9 +33,9 @@ func singleStockPipeline(
 		return
 	}
 
-	debug("Successfully got data for", symbol, ":", content)
+	debug(symbol, ":Successfully got data:", content)
 
-	stats, err := parseContent(content)
+	stats, err := parseContent(symbol, content)
 	if err != nil {
 		// skip the rest of pipeline
 		return
@@ -48,7 +48,7 @@ func singleStockPipeline(
 
 var regex = regexp.MustCompile("^[a0-9]+,([\\dd.]+),([\\dd.]+)$")
 
-func parseContent(content string) (stats, error) {
+func parseContent(symbol, content string) (stats, error) {
 
 	lines := strings.Split(content, "\n")
 	min := math.MaxFloat64
@@ -56,20 +56,20 @@ func parseContent(content string) (stats, error) {
 	price := float64(0.0)
 
 	for _, line := range lines {
-		debug("parsing line", line)
+		debug(symbol, ":parsing line in ", line)
 		match := regex.FindAllStringSubmatch(line, -1)
 		if match == nil || len(match[0]) != 3 {
 			continue
 		}
 
-		debug("parsed line", match)
+		debug(symbol, ":parsed line", match)
 
 		daymin, err := strconv.ParseFloat(match[0][2], 64)
 		if err != nil {
-			warning(err, "Error when parsing float", match[0])
+			warning(err, symbol, ":Error when parsing float", match[0])
 		} else {
 			if daymin < 0.001 {
-				warning("encountered an abnormal daily min value", daymin)
+				warning(symbol, ":encountered an abnormal daily min value", daymin)
 			} else {
 				min = math.Min(min, daymin)
 			}
@@ -77,7 +77,7 @@ func parseContent(content string) (stats, error) {
 
 		daymax, err := strconv.ParseFloat(match[0][1], 64)
 		if err != nil {
-			warning(err, "Error when parsing float", match[1])
+			warning(err, symbol, ":Error when parsing float", match[1])
 		} else {
 			max = math.Max(max, daymax)
 
@@ -85,7 +85,7 @@ func parseContent(content string) (stats, error) {
 			price = daymax
 		}
 
-		debug("parsed min:", daymin, "max:", daymax)
+		debug(symbol, ":parsed min:", daymin, "max:", daymax)
 	}
 
 	percentage := (price - min) / (max - min)
@@ -113,32 +113,32 @@ func downloadData(symbol string) (string, error) {
 		return string(fileBytes), nil
 	}
 	url := fmt.Sprintf("https://www.google.com/finance/getprices?q=%s&p=1Y&f=d,h,l&i=86401", symbol)
-	debug("Downloading data from", url)
+	debug(symbol, ":Downloading data from", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		warning(err, "Error when retrieving data over http. Skipping.")
+		warning(err, symbol, ":Error when retrieving data over http. Skipping.")
 		return "", err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		warning("Server returned", resp.StatusCode, "status code. Skipping...")
+		warning(symbol, ":Server returned", resp.StatusCode, "status code. Skipping...")
 		return "", http.ErrAbortHandler
 	}
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		warning(err, "Could not read response body. Skipping...")
+		warning(err, symbol, ":Could not read response body. Skipping...")
 		return "", err
 	}
 
-	debug("Saving data to", outputFile)
+	debug(symbol, ":Saving data to", outputFile)
 
 	err = ioutil.WriteFile(outputFile, bodyBytes, 0)
 	if err != nil {
-		warning(err, "Error writing output file", outputFile)
+		warning(err, symbol, ":Error writing output file", outputFile)
 	}
 
 	return string(bodyBytes), nil
