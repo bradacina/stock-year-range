@@ -7,17 +7,19 @@ import (
 )
 
 type settings struct {
-	OutputFolder string
-	OutputIndex  string
-	MessageLevel int
+	OutputFolder    string
+	OutputIndexFile string
+	MessageLevel    int
+	InputSymbolFile string
 }
 
 var runtimeSettings settings
 
 func main() {
-	runtimeSettings.MessageLevel = Warning
+	runtimeSettings.InputSymbolFile = "symbols.txt"
+	runtimeSettings.MessageLevel = Debug
 	runtimeSettings.OutputFolder = "output"
-	runtimeSettings.OutputIndex = "index.idx"
+	runtimeSettings.OutputIndexFile = "index.idx"
 
 	setLevel(runtimeSettings.MessageLevel)
 
@@ -26,15 +28,17 @@ func main() {
 		fatal(err, "Could not create output folder", runtimeSettings.OutputFolder)
 	}
 
+	symbols := readSymbols(runtimeSettings.InputSymbolFile)
+
 	tickChan := time.Tick(time.Second)
 
-	feederChan := feeder([]string{"NUH.AX", "Z1P"})
+	feederChan := feeder(symbols)
 
 	sinkChan := make(chan stats, 10)
 
 	doneChan := make(chan struct{})
 
-	outputIndexFile := runtimeSettings.OutputFolder + "/" + runtimeSettings.OutputIndex
+	outputIndexFile := runtimeSettings.OutputFolder + "/" + runtimeSettings.OutputIndexFile
 	go sink(sinkChan, outputIndexFile, fileSinkDelegate, doneChan)
 
 	wg := sync.WaitGroup{}

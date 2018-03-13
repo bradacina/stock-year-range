@@ -116,6 +116,7 @@ func downloadData(symbol string) (string, error) {
 
 		return string(fileBytes), nil
 	}
+
 	url := fmt.Sprintf("https://www.google.com/finance/getprices?q=%s&p=1Y&f=d,h,l&i=86401", symbol)
 	debug(symbol, ":Downloading data from", url)
 
