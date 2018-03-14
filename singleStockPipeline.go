@@ -24,8 +24,14 @@ func singleStockPipeline(
 	symbol string,
 	wg *sync.WaitGroup,
 	sinkChan chan<- stats) {
-	debug(symbol, ":Downloading data")
 	defer wg.Done()
+
+	if symbol == "" {
+		debug("Found empty symbol. Skipping...")
+		return
+	}
+
+	debug(symbol, ":Downloading data")
 
 	content, err := downloadData(symbol)
 	if err != nil || content == "" {

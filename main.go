@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -16,6 +17,9 @@ type settings struct {
 var runtimeSettings settings
 
 func main() {
+	log.SetFlags(log.LstdFlags)
+	log.SetOutput(os.Stdout)
+
 	runtimeSettings.InputSymbolFile = "symbols.txt"
 	runtimeSettings.MessageLevel = Debug
 	runtimeSettings.OutputFolder = "output"
