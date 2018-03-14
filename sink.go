@@ -3,11 +3,10 @@ package main
 import (
 	"os"
 	"fmt"
+	"sync"
 )
 
-type sinkDelegate (func(*os.File, stats))
-
-func fileSinkDelegate(file *os.File, thestats stats) {
+func writeToIndex(file *os.File, thestats stats) {
 		debug("going to write to file", fmt.Sprintf("%v", thestats))
 		_, err := file.WriteString(
 			fmt.Sprintf("%v,%v,%v,%v,%v\n", 
@@ -24,8 +23,8 @@ func fileSinkDelegate(file *os.File, thestats stats) {
 func sink(
 	sinkChan <-chan stats,
 	outputFile string, 
-	f sinkDelegate, 
-	done <-chan struct{}) {
+	done <-chan struct{},
+	wg *sync.WaitGroup) {
 		
 		file, err := os.Create(outputFile)
 		if err != nil {
@@ -33,13 +32,21 @@ func sink(
 		}
 		defer file.Close()
 
+	isDone := false
 	for {
 		select{
 		case stats := <- sinkChan:
-			f(file,stats)
+			writeToIndex(file,stats)
 			break
 		case <- done:
-			return
+			isDone = true
+			done = nil
+			break
+		default:
+			if isDone {
+				wg.Done()
+				return
+			}
 		}
 	}
 }

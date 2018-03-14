@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 )
 
 const (
@@ -13,6 +14,18 @@ const (
 )
 
 var currentLevel = Warning
+
+func parseLevel(lvl string) int {
+	lvl = strings.ToLower(lvl)
+
+	switch(lvl){
+	case "debug": return Debug
+	case "info": return Info
+	case "warning": return Warning
+	case "fatal": return Fatal
+	default: return Warning
+	}
+}
 
 func setLevel(level int) {
 	currentLevel = level
