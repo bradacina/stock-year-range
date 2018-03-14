@@ -21,9 +21,9 @@ func main() {
 	log.SetOutput(os.Stdout)
 
 	runtimeSettings.InputSymbolFile = "symbols.txt"
-	runtimeSettings.MessageLevel = Debug
+	runtimeSettings.MessageLevel = Warning
 	runtimeSettings.OutputFolder = "output"
-	runtimeSettings.OutputIndexFile = "index.idx"
+	runtimeSettings.OutputIndexFile = "_index.idx"
 
 	setLevel(runtimeSettings.MessageLevel)
 
